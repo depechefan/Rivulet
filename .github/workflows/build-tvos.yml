@@ -19,37 +19,37 @@ jobs:
       - name: Patch Xcode 26 and disable BackgroundAssets crash
         run: |
           python3 - << 'PYEOF'
-          import re
-
+          import os, re
           p1 = "Rivulet/Services/Plex/Playback/NowPlayingService.swift"
-          s1 = open(p1).read()
-          s1 = re.sub(r"if #available\(tvOS 27\.0, \*\)[\s\S]*?\n\s*\}", "", s1, count=1)
-          open(p1, "w").write(s1)
-
+          if os.path.exists(p1):
+              s1 = open(p1).read()
+              s1 = re.sub(r"if #available\(tvOS 27\.0, \*\)[\s\S]*?\n\s*\}", "", s1, count=1)
+              open(p1, "w").write(s1)
           p2 = "RivuletCore/TMDB/TrendingMatch.swift"
-          s2 = open(p2).read()
-          old2 = "        (0..<max(movies.count, shows.count)).flatMap { i in\n            (i < movies.count ? [movies[i]] : []) + (i < shows.count ? [shows[i]] : [])\n        }"
-          if old2 in s2:
-              new2 = "        var result: [TMDBListItem] = []\n        for i in 0..<max(movies.count, shows.count) {\n            if i < movies.count { result.append(movies[i]) }\n            if i < shows.count { result.append(shows[i]) }\n        }\n        return result"
-              open(p2, "w").write(s2.replace(old2, new2))
-
+          if os.path.exists(p2):
+              s2 = open(p2).read()
+              old2 = "        (0..<max(movies.count, shows.count)).flatMap { i in\n            (i < movies.count ? [movies[i]] : []) + (i < shows.count ? [shows[i]] : [])\n        }"
+              if old2 in s2:
+                  new2 = "        var result: [TMDBListItem] = []\n        for i in 0..<max(movies.count, shows.count) {\n            if i < movies.count { result.append(movies[i]) }\n            if i < shows.count { result.append(shows[i]) }\n        }\n        return result"
+                  open(p2, "w").write(s2.replace(old2, new2))
           p3 = "Rivulet/Services/MediaProvider/Person/PersonFilmographyProvider.swift"
-          s3 = open(p3).read()
-          old3 = "    return container?.MediaContainer.Hub?\n        .filter { $0.type == \"actor\" }\n        .flatMap { $0.Directory ?? [] }\n        .first { $0.tag.map(normalizedActorName) == target }?\n        .id.map(String.init)"
-          if old3 in s3:
-              new3 = "    let hubs = container?.MediaContainer.Hub ?? []\n    for hub in hubs where hub.type == \"actor\" {\n        for dir in hub.Directory ?? [] {\n            if let tag = dir.tag, normalizedActorName(tag) == target, let id = dir.id {\n                return String(id)\n            }\n        }\n    }\n    return nil"
-              open(p3, "w").write(s3.replace(old3, new3))
-
+          if os.path.exists(p3):
+              s3 = open(p3).read()
+              old3 = "    return container?.MediaContainer.Hub?\n        .filter { $0.type == \"actor\" }\n        .flatMap { $0.Directory ?? [] }\n        .first { $0.tag.map(normalizedActorName) == target }?\n        .id.map(String.init)"
+              if old3 in s3:
+                  new3 = "    let hubs = container?.MediaContainer.Hub ?? []\n    for hub in hubs where hub.type == \"actor\" {\n        for dir in hub.Directory ?? [] {\n            if let tag = dir.tag, normalizedActorName(tag) == target, let id = dir.id {\n                return String(id)\n            }\n        }\n    }\n    return nil"
+                  open(p3, "w").write(s3.replace(old3, new3))
           p4 = "Rivulet/Services/Plex/Playback/ContentFilter/SpeechWordRecognizer.swift"
-          s4 = open(p4).read()
-          old4 = "        guard let file = try? AssetPackManager.shared.url(for: FilePath(\"\\(folderName)/config.json\")) else { return nil }\n        let folder = file.deletingLastPathComponent()\n        return AsrModels.modelsExist(at: folder, version: version) ? folder : nil"
-          if old4 in s4:
-              s4 = s4.replace(old4, "        return nil")
-          s4 = s4.replace("import BackgroundAssets\n", "")
-          old4b = "        let manager = AssetPackManager.shared\n        let pack = try await manager.assetPack(withID: assetPackID)\n        let updates = Task {\n            for await update in manager.statusUpdates(forAssetPackWithID: assetPackID) {\n                if case .downloading(_, let fraction) = update { progress(fraction.fractionCompleted) }\n            }\n        }\n        defer { updates.cancel() }\n        try await manager.ensureLocalAvailability(of: pack)"
-          if old4b in s4:
-              s4 = s4.replace(old4b, "        throw URLError(.fileDoesNotExist)")
-          open(p4, "w").write(s4)
+          if os.path.exists(p4):
+              s4 = open(p4).read()
+              old4 = "        guard let file = try? AssetPackManager.shared.url(for: FilePath(\"\\(folderName)/config.json\")) else { return nil }\n        let folder = file.deletingLastPathComponent()\n        return AsrModels.modelsExist(at: folder, version: version) ? folder : nil"
+              if old4 in s4:
+                  s4 = s4.replace(old4, "        return nil")
+              s4 = s4.replace("import BackgroundAssets\n", "")
+              old4b = "        let manager = AssetPackManager.shared\n        let pack = try await manager.assetPack(withID: assetPackID)\n        let updates = Task {\n            for await update in manager.statusUpdates(forAssetPackWithID: assetPackID) {\n                if case .downloading(_, let fraction) = update { progress(fraction.fractionCompleted) }\n            }\n        }\n        defer { updates.cancel() }\n        try await manager.ensureLocalAvailability(of: pack)"
+              if old4b in s4:
+                  s4 = s4.replace(old4b, "        throw URLError(.fileDoesNotExist)")
+              open(p4, "w").write(s4)
           PYEOF
 
       - name: Archive Rivulet tvOS
